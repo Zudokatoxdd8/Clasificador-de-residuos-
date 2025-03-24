@@ -14,17 +14,16 @@
             color: #d8b3ff;
             padding: 20px;
         }
-
         #webcam-container {
             margin-top: 10px;
         }
-
         video, canvas {
             border: 3px solid #d8b3ff;
             border-radius: 10px;
             box-shadow: 0px 0px 15px #d8b3ff;
+            width: 100%;
+            max-width: 300px;
         }
-
         button {
             background: #d8b3ff;
             color: #1a073f;
@@ -37,14 +36,12 @@
             transition: 0.3s;
             margin: 5px;
         }
-
         button:hover {
             background: #a373c3;
             box-shadow: 0px 0px 10px #d8b3ff;
         }
-
         #label-container div {
-            font-size: 10px;
+            font-size: 14px;
             font-weight: bold;
             margin-top: 10px;
             padding: 5px;
@@ -73,35 +70,46 @@
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            const flip = true;
             const constraints = {
-                video: { facingMode: "environment" } // Usa la cámara trasera
+                video: { facingMode: { exact: "environment" } }
             };
-            webcam = new tmImage.Webcam(190, 190, flip, constraints);
-            await webcam.setup();
-            await webcam.play();
-            window.requestAnimationFrame(loop);
 
-            document.getElementById("webcam-container").appendChild(webcam.canvas);
-            labelContainer = document.getElementById("label-container");
-            for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.appendChild(document.createElement("div"));
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                const video = document.createElement("video");
+                video.srcObject = stream;
+                video.play();
+
+                document.getElementById("webcam-container").innerHTML = "";
+                document.getElementById("webcam-container").appendChild(video);
+
+                webcam = { video };
+                window.requestAnimationFrame(loop);
+                document.getElementById("confirm-btn").disabled = false;
+            } catch (error) {
+                console.error("No se pudo acceder a la cámara trasera:", error);
             }
-
-            document.getElementById("confirm-btn").disabled = false;
         }
 
         async function loop() {
-            webcam.update();
-            window.requestAnimationFrame(loop);
+            if (webcam.video.readyState === 4) {
+                window.requestAnimationFrame(loop);
+            }
         }
 
         async function predict() {
-            prediction = await model.predict(webcam.canvas);
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = webcam.video.videoWidth;
+            canvas.height = webcam.video.videoHeight;
+            ctx.drawImage(webcam.video, 0, 0, canvas.width, canvas.height);
+
+            prediction = await model.predict(canvas);
         }
 
         async function confirmar() {
             await predict();
+            labelContainer = document.getElementById("label-container");
             labelContainer.innerHTML = "";
             let maxPrediction = prediction.reduce((max, p) => p.probability > max.probability ? p : max, prediction[0]);
             
