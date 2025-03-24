@@ -10,24 +10,23 @@
         body {
             text-align: center;
             font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1a073f, #3b1b6b);
-            color: #d8b3ff;
+            background: linear-gradient(135deg, #011d34, #002b36);
+            color: #00ffcc;
             padding: 20px;
         }
-
         #webcam-container {
-            margin-top: 10px;
+            margin-top: 20px;
         }
-
         video, canvas {
-            border: 3px solid #d8b3ff;
+            border: 3px solid #00ffcc;
             border-radius: 10px;
-            box-shadow: 0px 0px 15px #d8b3ff;
+            box-shadow: 0px 0px 15px #00ffcc;
+            width: 100%;
+            max-width: 350px;
         }
-
         button {
-            background: #d8b3ff;
-            color: #1a073f;
+            background: #00ffcc;
+            color: #002b36;
             border: none;
             padding: 10px 20px;
             font-size: 14px;
@@ -37,22 +36,20 @@
             transition: 0.3s;
             margin: 5px;
         }
-
         button:hover {
-            background: #a373c3;
-            box-shadow: 0px 0px 10px #d8b3ff;
+            background: #00b3a6;
+            box-shadow: 0px 0px 10px #00ffcc;
         }
-
         #label-container div {
-            font-size: 10px;
+            font-size: 14px;
             font-weight: bold;
             margin-top: 10px;
             padding: 5px;
-            background: rgba(216, 179, 255, 0.2);
-            border: 2px solid #d8b3ff;
+            background: rgba(0, 255, 204, 0.2);
+            border: 2px solid #00ffcc;
             border-radius: 5px;
             display: inline-block;
-            box-shadow: 0px 0px 10px #d8b3ff;
+            box-shadow: 0px 0px 10px #00ffcc;
         }
     </style>
 </head>
@@ -73,8 +70,7 @@
             model = await tmImage.load(modelURL, metadataURL);
             maxPredictions = model.getTotalClasses();
 
-            const flip = true;
-            webcam = new tmImage.Webcam(190, 190, flip);
+            webcam = new tmImage.Webcam(190, 190, true);
             await webcam.setup();
             await webcam.play();
             window.requestAnimationFrame(loop);
