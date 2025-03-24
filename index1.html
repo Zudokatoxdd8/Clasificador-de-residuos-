@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLASIFICADOR RESIDUOS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1a073f, #3b1b6b);
+            color: #d8b3ff;
+            padding: 20px;
+        }
+
+        #webcam-container {
+            margin-top: 10px;
+        }
+
+        video, canvas {
+            border: 3px solid #d8b3ff;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px #d8b3ff;
+        }
+
+        button {
+            background: #d8b3ff;
+            color: #1a073f;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #a373c3;
+            box-shadow: 0px 0px 10px #d8b3ff;
+        }
+
+        #label-container div {
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 10px;
+            padding: 5px;
+            background: rgba(216, 179, 255, 0.2);
+            border: 2px solid #d8b3ff;
+            border-radius: 5px;
+            display: inline-block;
+            box-shadow: 0px 0px 10px #d8b3ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clasificador de Residuos</h1>
+    <button type="button" onclick="init()">Iniciar</button>
+    <button type="button" onclick="confirmar()" id="confirm-btn" disabled>Confirmar</button>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+    <script>
+        const URL = "https://teachablemachine.withgoogle.com/models/qTNLu2_sQ/";
+        let model, webcam, labelContainer, maxPredictions, prediction;
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const flip = true;
+            webcam = new tmImage.Webcam(190, 190, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+
+            document.getElementById("confirm-btn").disabled = false;
+        }
+
+        async function loop() {
+            webcam.update();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            prediction = await model.predict(webcam.canvas);
+        }
+
+        async function confirmar() {
+            await predict();
+            labelContainer.innerHTML = "";
+            let maxPrediction = prediction.reduce((max, p) => p.probability > max.probability ? p : max, prediction[0]);
+            
+            const advice = {
+                "Vidrio": "El vidrio es 100% reciclable. Lávalo antes de tirarlo.",
+                "Plástico": "Los plásticos tardan más de 100 años en descomponerse, reutilízalos si puedes.",
+                "Orgánico": "Los desechos orgánicos pueden convertirse en abono natural.",
+                "Papel/Cartón": "Recicla el papel y cartón para reducir la tala de árboles."
+            };
+            
+            let div = document.createElement("div");
+            div.innerHTML = `${maxPrediction.className}: ${Math.round(maxPrediction.probability * 100)}%<br>${advice[maxPrediction.className] || "Recicla siempre que puedas."}`;
+            labelContainer.appendChild(div);
+        }
+    </script>
+</body>
+</html>
