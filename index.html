@@ -74,7 +74,10 @@
             maxPredictions = model.getTotalClasses();
 
             const flip = true;
-            webcam = new tmImage.Webcam(190, 190, flip);
+            const constraints = {
+                video: { facingMode: "environment" } // Usa la cámara trasera
+            };
+            webcam = new tmImage.Webcam(190, 190, flip, constraints);
             await webcam.setup();
             await webcam.play();
             window.requestAnimationFrame(loop);
